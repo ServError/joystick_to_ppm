@@ -1,30 +1,34 @@
-Joystick to PPM Adapter using Raspberry PI and Arduino
+Multiple (or Single) Joystick to PPM Adapter using Raspberry PI and Arduino
 =========
 
 ## General
-This project is still work in progress, I've done that for a FPV Groundstation. It does not have an UI (perhaps someone wants to write one?), instead, channel mappings are done using a configuration file.
+This project is a fork of https://github.com/dmpriso/joystick_to_ppm. Its goal is to add support for multiple USB joysticks as well as perform general cleanup and bugfixing. Please see that repo for the old readme.
 
 ## Hardware
-All you need is a Raspberry Pi, a Linux compatible Joystick and an Arduino board.
-Plug the Joystick into Raspberry. Connect the Raspberry to the Arduino via USB. 
-The Raspberry will use the following devices (this is currently hard-coded)
+All you need is a Raspberry Pi (this was tested on an old zero), a Linux compatible Joystick and an Arduino board.
+Plug the Joystick into Raspberry. Connect the Raspberry to the Arduino via USB.
 
-**Joystick:**
-```
-/dev/input/js0
-```
+The contents of the example directory can be overlaid on your root to place files where they are expected. Check for appropriate read permissions, as well as execute permissions on the .sh script.
 
-**Serial:**
-```
-/dev/ttyUSB0
-```
+Udev rules are provided in the example folder to show how to create a symlink for your joysticks.
 
-The Arduino will output a 12-Channel 22.5ms PPM signal on Pin 10.
+To obtain the model and manufacturer needed in the joystick rule file, run
+```
+udevadm info -q all -n /dev/input/js0
+```
+and repeat for each of your joysticks. Edit the symlink name to something appropriate, then modify the corresponding links in main.cpp.
+
+Adding additional or fewer joysticks is simply a matter of copying the file descriptor code of one of the existing joysticks, and the read loop within the main loop.
+
+An example is also included for turning off the LEDs on the Thrustmaster Warthog Throttle. This includes on rule file and the shell script it calls.
+
+
+The Arduino will output an 8-Channel 22.5ms PPM signal on Pin 10.
 Arduino code is based on previous work: https://github.com/ckalpha/Generate-PPM-Signal/
 
 ## Configuration
-At the moment, configuration is done via a settings file.
-Path of the settings file is /usr/local/etc/joystick/mappings.ini *TODO: make that customizable via parameter*
+At the moment, configuration is done via a settings files.
+Path of the settings files is /usr/local/etc/joystick/{joystick name}_mappings.ini
 
 You can map axis and buttons to output channels, and define special actions for buttons.
 Configuration is an INI file. Ini parsing is based on previous work: https://github.com/atomicptr/libini
@@ -32,7 +36,7 @@ Configuration is an INI file. Ini parsing is based on previous work: https://git
 ### How do I find axis and button IDs?
 Install jstest on your raspberry and run
 ```
-jstest /dev/input/js0
+jstest /dev/input/js{joystick number/symlink}
 ```
 
 *I strongly recommend you to perform a joystick calibration and save the joystick configuration on your system. See the following article for instructions:*
