@@ -6,7 +6,7 @@ This project is a fork of https://github.com/dmpriso/joystick_to_ppm. Its goal i
 
 ## Hardware
 All you need is a Raspberry Pi (this was tested on an old zero), a Linux compatible Joystick and an Arduino board.
-Plug the Joystick into Raspberry. Connect the Raspberry to the Arduino via USB.
+Plug the Joysticks into the Pu. Connect the Raspberry to the Arduino via USB, or directly (change serial device in main.cpp to /dev/ttyAMA0 and make sure to enable serial port and disable serial console in raspi-config)
 
 The contents of the example directory can be overlaid on your root to place files where they are expected. Check for appropriate read permissions, as well as execute permissions on the .sh script.
 
