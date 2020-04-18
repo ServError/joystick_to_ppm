@@ -1,0 +1,4 @@
+KERNEL=="js?", ENV{ID_MODEL}=="Joystick_-_HOTAS_Warthog", SYMLINK+="input/jsjoy"
+KERNEL=="js?", ENV{ID_MODEL}=="Throttle_-_HOTAS_Warthog", SYMLINK+="input/jsthrot"
+KERNEL=="js?", ENV{ID_MODEL}=="Saitek_Pro_Flight_Combat_Rudder_Pedals", SYMLINK+="input/jspedals"
+

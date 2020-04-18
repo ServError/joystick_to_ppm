@@ -1,9 +1,9 @@
 // from https://github.com/ckalpha/Generate-PPM-Signal/blob/master/Generate-PPM-Signal.ino
 
-//this programm will put out a PPM signal
+//this program will put out a PPM signal
 
 //////////////////////CONFIGURATION///////////////////////////////
-#define chanel_number 12  //set the number of chanels
+#define channel_number 8  //set the number of channels
 #define default_servo_value 1500  //set the default servo value
 #define PPM_FrLen 22500  //set the PPM frame length in microseconds (1ms = 1000µs)
 #define PPM_PulseLen 300  //set the pulse length
@@ -13,8 +13,8 @@
 
 
 /*this array holds the servo values for the ppm signal
- change theese values in your code (usually servo values move between 1000 and 2000)*/
-int ppm[chanel_number];
+ change these values in your code (usually servo values move between 1000 and 2000)*/
+int ppm[channel_number];
 bool ppm_running;
 
 void setup(){ 
@@ -28,7 +28,7 @@ void startPPM(){
     ppm_running = true;
     
     //initiallize default ppm values
-    for(int i=0; i<chanel_number; i++){
+    for(int i=0; i<channel_number; i++){
       ppm[i]= default_servo_value;
     }
   
@@ -120,7 +120,7 @@ void loop(){
       int iChannel = atoi(param0);
       int iValue = atoi(param1);
 
-      if (iChannel >= 0 && iChannel < chanel_number && iValue >= 800 && iValue <= 2200) {
+      if (iChannel >= 0 && iChannel < channel_number && iValue >= 800 && iValue <= 2200) {
         startPPM();
         Serial.println("Valid PPM cmd received");
         ppm[iChannel] = iValue;
@@ -146,7 +146,7 @@ ISR(TIMER1_COMPA_vect){  //leave this alone
     digitalWrite(sigPin, !onState);
     state = true;
 
-    if(cur_chan_numb >= chanel_number){
+    if(cur_chan_numb >= channel_number){
       cur_chan_numb = 0;
       calc_rest = calc_rest + PPM_PulseLen;// 
       OCR1A = (PPM_FrLen - calc_rest) * 2;

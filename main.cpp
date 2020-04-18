@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <fstream>
 #include <cstring>
+#include <cstdlib>
+#include <signal.h>
 #include <iostream>
 #include <unistd.h>
 #include <termios.h>
@@ -16,6 +18,8 @@ struct js_event
 	__u8 type;      /* event type */
 	__u8 number;    /* axis/button number */
 };
+
+volatile sig_atomic_t sigint_fired;
 
 #define JS_EVENT_BUTTON         0x01    /* button pressed/released */
 #define JS_EVENT_AXIS           0x02    /* joystick moved */
@@ -61,10 +65,26 @@ int set_interface_attribs (int fd, int speed, int parity)
 	return 0;
 }
 
+int fd_set_nonblocking(int fd) {
+    /* Save the current flags */
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1)
+        return 0;
 
+        flags |= O_NONBLOCK;
+    return fcntl(fd, F_SETFL, flags) != -1;
+}
+
+void sigint_handler(int s){
+	sigint_fired = 1;
+    //exit(1); 
+}
 
 int main()
 {
+	struct sigaction sigIntHandler;
+	std::string const USRJOY = "/usr/local/etc/joystick/";
+
 	std::cout << "opening USB" << std::endl;
 	int fdc = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_SYNC);
 	set_interface_attribs (fdc, B115200, 0);
@@ -76,30 +96,94 @@ int main()
 	
 	std::cout << "opening joystick" << std::endl;
 
-	joystick joy("mappings.ini", "user_trims.ini", ppm);
+	joystick joy1(USRJOY + "joy_mappings.ini", USRJOY + "joy_user_trims.ini", ppm);
+	joystick joy2(USRJOY + "throt_mappings.ini", USRJOY + "throt_user_trims.ini", ppm);
+	joystick joy3(USRJOY + "pedals_mappings.ini", USRJOY + "pedals_user_trims.ini", ppm);
 	
 	// open joystick
-	int fd = open("/dev/input/js0", O_RDONLY);
-	
-	js_event e;
-	
-	// read from joystick
-	while(read(fd, &e, sizeof(e)) > 0)
+	int fd1 = open("/dev/input/jsjoy", O_RDONLY);
+	fd_set_nonblocking(fd1);
+	int fd2 = open("/dev/input/jsthrot", O_RDONLY);
+	fd_set_nonblocking(fd2);
+	int fd3 = open("/dev/input/jspedals", O_RDONLY);
+	fd_set_nonblocking(fd3);
+
+	sigIntHandler.sa_handler = sigint_handler;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+
+	sigaction(SIGINT, &sigIntHandler, NULL);
+
+	js_event ev;
+
+	int readJoy;
+
+	while(sigint_fired == 0)
 	{
-		e.type = e.type &~JS_EVENT_INIT;
-		
-		if (e.type == JS_EVENT_AXIS)
+		for(int i = 0;i > 10; i++) // Reduce polling of SIGINT
 		{
-			joy.put_axis(e.number, (float)e.value / 32768.0f);
-		}
-		else if (e.type == JS_EVENT_BUTTON)
-		{
-			joy.put_button(e.number, e.value != 0);
-		}
-		else
-		{
-			std::cout << "unknown type " << (int)e.type;
+			// read from joysticks
+			readJoy = read(fd1, &ev, sizeof(ev));
+			if(readJoy > 0)
+			{
+				ev.type = ev.type &~JS_EVENT_INIT;
+
+				if (ev.type == JS_EVENT_AXIS)
+				{
+					joy1.put_axis(ev.number, (float)ev.value / 32768.0f);
+				}
+				else if (ev.type == JS_EVENT_BUTTON)
+				{
+					joy1.put_button(ev.number, ev.value != 0);
+				}
+				else
+				{
+					std::cout << "unknown type for joy1 " << (int)ev.type;
+				}
+			}
+			readJoy = read(fd2, &ev, sizeof(ev));
+			if(readJoy > 0)
+			{
+				ev.type = ev.type &~JS_EVENT_INIT;
+
+				if (ev.type == JS_EVENT_AXIS)
+				{
+					joy2.put_axis(ev.number, (float)ev.value / 32768.0f);
+				}
+				else if (ev.type == JS_EVENT_BUTTON)
+				{
+					joy2.put_button(ev.number, ev.value != 0);
+				}
+				else
+				{
+					std::cout << "unknown type for joy2 " << (int)ev.type;
+				}
+			}
+			readJoy = read(fd3, &ev, sizeof(ev));
+			if(readJoy > 0)
+			{
+				ev.type = ev.type &~JS_EVENT_INIT;
+
+				if (ev.type == JS_EVENT_AXIS)
+				{
+					joy3.put_axis(ev.number, (float)ev.value / 32768.0f);
+				}
+				else if (ev.type == JS_EVENT_BUTTON)
+				{
+					joy3.put_button(ev.number, ev.value != 0);
+				}
+				else
+				{
+					std::cout << "unknown type for joy3 " << (int)ev.type;
+				}
+			}
 		}
 	}
+	printf("Exit signal caught");
+	close(fdc);
+	close(fd1);
+	close(fd2);
+	close(fd3);
+
 	return 0;
 }

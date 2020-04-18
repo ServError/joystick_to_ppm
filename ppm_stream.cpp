@@ -13,10 +13,10 @@ void ppm_stream::setChannelValue(unsigned char channel, float value)
 	// value is -1 ... 1 -> 1000 .. 2000
 	value = value * 500.0f + 1500.0f;
 	// define some upper and lower limit
-	if (value > 2100.0f)
-		value = 2100.0f;
-	if (value < 900.0f)
-		value = 900.0f;
+	if (value > 2200.0f)
+		value = 2200.0f;
+	if (value < 800.0f)
+		value = 800.0f;
 	
 	// output that value as int
 	this->m_target << "ppm:" << (int)channel << "," << (int)value << "\n" << std::flush;
@@ -35,10 +35,10 @@ void ppm_file::setChannelValue(unsigned char channel, float value)
 	// value is -1 ... 1 -> 1000 .. 2000
 	value = value * 500.0f + 1500.0f;
 	// define some upper and lower limit
-	if (value > 2100.0f)
-		value = 2100.0f;
-	if (value < 900.0f)
-		value = 900.0f;
+	if (value > 2200.0f)
+		value = 2200.0f;
+	if (value < 800.0f)
+		value = 800.0f;
 	
 	// output that value as int
 	ss << "ppm:" << (int)channel << "," << (int)value << "\n" << std::flush;
